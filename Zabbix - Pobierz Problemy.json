@@ -1,0 +1,168 @@
+{
+  "name": "Zabbix - Pobierz Problemy",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://<adres-IP-Twojego-zabbixa>/zabbix/api_jsonrpc.php",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json-rpc"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"user.login\",\n  \"params\": {\n    \"username\": \"Admin\",\n    \"password\": \"<twoje-haslo-do-zabbixa>\"\n  },\n  \"id\": 1\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "1dcf7aed-8b7d-4459-b77a-16bc953b5f09",
+      "name": "Zabbix Login"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://<adres-IP-Twojego-zabbixa>/zabbix/api_jsonrpc.php",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json-rpc"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.result }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"problem.get\",\n  \"params\": {\n    \"output\": \"extend\",\n    \"recent\": true,\n    \"sortfield\": [\"eventid\"],\n    \"sortorder\": \"DESC\",\n    \"limit\": 10\n  },\n  \"id\": 2\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "3809ac50-23ec-4eea-8962-5fa6ed8712e8",
+      "name": "Pobierz Problemy"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fca336c4-342f-4277-9312-13e7f145af89",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "fromEmail": "mail-do-wysylki@domena.pl",
+        "toEmail": "mail-odbiorczy@domena.pl",
+        "subject": "=Raport z Zabbixa",
+        "html": "={{ $json.html }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        0
+      ],
+      "id": "00904ec8-07af-4b7e-bb12-3f698cbf8727",
+      "name": "Send Email",
+      "webhookId": "04624039-7b5e-4d13-ba0f-4ed503ba37c1",
+      "credentials": {
+        "smtp": {
+          "id": "0YOX8LCwu0tPNltm",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const problems = items[0].json.result;\n\nlet html = `<h2>Raport Zabbix – ostatnie problemy</h2><ul>`;\n\nfor (const p of problems) {\n  html += `<li>\n    <b>EventID:</b> ${p.eventid}<br>\n    <b>Opis:</b> ${p.name}<br>\n    <b>Severity:</b> ${p.severity}<br>\n    <b>Czas:</b> ${new Date(p.clock * 1000).toLocaleString()}\n  </li><br>`;\n}\n\nhtml += `</ul>`;\n\nreturn [{ json: { html } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        0
+      ],
+      "id": "a6c169ef-9659-46bd-a26a-8c89d24a7b38",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Zabbix Login": {
+      "main": [
+        [
+          {
+            "node": "Pobierz Problemy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Zabbix Login",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pobierz Problemy": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b97769bd-e8ef-48e7-9211-7650317f9443",
+  "meta": {
+    "instanceId": "eafe2bbd986238e59814b283c70b7d1fbe21985157b8fc2e91846a1f8d4dd92a"
+  },
+  "id": "4B2a1Ug5AHSn2fpQ",
+  "tags": []
+}
