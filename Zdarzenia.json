@@ -1,0 +1,134 @@
+{
+  "name": "Zdarzenia",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        -64
+      ],
+      "id": "d96dab63-8aec-4f08-baaa-02b029d893a5",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const problems = items[0].json.result;\n\nlet html = `<h2>Raport Zabbix – ostatnie problemy</h2><ul>`;\n\nfor (const p of problems) {\n  html += `<li>\n    <b>EventID:</b> ${p.eventid}<br>\n    <b>Opis:</b> ${p.name}<br>\n    <b>Severity:</b> ${p.severity}<br>\n    <b>Czas:</b> ${new Date(p.clock * 1000).toLocaleString()}\n  </li><br>`;\n}\n\nhtml += `</ul>`;\n\nreturn [{ json: { html } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        -64
+      ],
+      "id": "9f3a12e2-1ef0-4076-a619-bd288635fd4f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "fromEmail": "arek@grupadm.pl",
+        "toEmail": "arek@asdevops.pl",
+        "subject": "=Raport z Zabbixa",
+        "html": "={{ $json.html }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        592,
+        -64
+      ],
+      "id": "153543d0-9382-4971-888e-d014b85bfce8",
+      "name": "Send Email",
+      "webhookId": "04624039-7b5e-4d13-ba0f-4ed503ba37c1",
+      "credentials": {
+        "smtp": {
+          "id": "0YOX8LCwu0tPNltm",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.50/zabbix/api_jsonrpc.php",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json-rpc"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"problem.get\",\n  \"params\": {\n    \"output\": \"extend\",\n    \"recent\": true,\n    \"sortfield\": [\"eventid\"],\n    \"sortorder\": \"DESC\",\n    \"limit\": 10\n  },\n  \"id\": 2\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -224,
+        -64
+      ],
+      "id": "cfea5230-963e-492b-86ad-d7aa7d85936f",
+      "name": "Zdarzenia",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Lcf7s2iT7ZkZjH8m",
+          "name": "Zabbix"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Zdarzenia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zdarzenia": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cbec7564-3c07-4f4f-a053-6b4d635bbf32",
+  "meta": {
+    "instanceId": "eafe2bbd986238e59814b283c70b7d1fbe21985157b8fc2e91846a1f8d4dd92a"
+  },
+  "id": "xnrz5LNEwUW45E9Q",
+  "tags": []
+}

@@ -2,64 +2,6 @@
   "name": "Zabbix - Triggery 24h (event.get)",
   "nodes": [
     {
-      "parameters": {
-        "method": "POST",
-        "url": "http://<adres-IP-Twojego-zabbixa>/zabbix/api_jsonrpc.php",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json-rpc"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"user.login\",\n  \"params\": {\n    \"username\": \"Admin\",\n    \"password\": \"<twoje-haslo-do-zabbixa>\"\n  },\n  \"id\": 1\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        928,
-        96
-      ],
-      "id": "3e8b8694-0d04-4ff5-9aea-f511f3413bc1",
-      "name": "Zabbix Login"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://<adres-IP-Twojego-zabbixa>/zabbix/api_jsonrpc.php",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json-rpc"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $json.result }}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ ({\n  jsonrpc: '2.0',\n  method: 'event.get',\n  params: {\n    output: ['eventid','clock','value','name'],\n    source: 0,\n    object: 0,\n    time_from: Math.floor(Date.now() / 1000) - 86400,\n    selectHosts: ['name','host'],\n    selectRelatedObject: ['description','priority'],\n    sortfield: ['clock'],\n    sortorder: 'DESC',\n    limit: 1000\n  },\n  id: 2\n}) }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1152,
-        96
-      ],
-      "id": "788c36f6-7c6a-44a2-ae34-2f4e97a47249",
-      "name": "Zabbix API - event.get (24h)"
-    },
-    {
       "parameters": {},
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -72,8 +14,8 @@
     },
     {
       "parameters": {
-        "fromEmail": "mail-do-wysylki@domena.pl",
-        "toEmail": "mail-odbiorczy@domena.pl",
+        "fromEmail": "arek@grupadm.pl",
+        "toEmail": "arek@asdevops.pl",
         "subject": "=Raport z Zabbixa",
         "html": "={{ $json.message.content }}",
         "options": {}
@@ -138,26 +80,50 @@
           "name": "OpenAi account"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.50/zabbix/api_jsonrpc.php",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json-rpc"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"event.get\",\n    \"params\": {\n      \"source\": 0,\n      \"object\": 0,\n      \"selectHosts\": [\"name\", \"host\"],\n      \"selectRelatedObject\": [\"description\", \"priority\"],\n      \"sortfield\": [\"clock\"],\n      \"sortorder\": \"DESC\",\n      \"limit\": 1000\n    },\n    \"id\": 2\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        896,
+        -64
+      ],
+      "id": "8dfe8c3c-c0af-4c36-a17f-5b0d36470f98",
+      "name": "Zdarzenia",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Lcf7s2iT7ZkZjH8m",
+          "name": "Zabbix"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
-    "Zabbix Login": {
-      "main": [
-        [
-          {
-            "node": "Zabbix API - event.get (24h)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Manual Trigger": {
       "main": [
         [
           {
-            "node": "Zabbix Login",
+            "node": "Zdarzenia",
             "type": "main",
             "index": 0
           }
@@ -169,17 +135,6 @@
         [
           {
             "node": "Podsumowanie AI",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Zabbix API - event.get (24h)": {
-      "main": [
-        [
-          {
-            "node": "Code in JavaScript",
             "type": "main",
             "index": 0
           }
@@ -201,13 +156,24 @@
           }
         ]
       ]
+    },
+    "Zdarzenia": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "b72a589e-6691-4186-8f15-30ccd68550ed",
+  "versionId": "88e05681-f290-4411-8af3-5dbabd45c5f1",
   "meta": {
     "instanceId": "eafe2bbd986238e59814b283c70b7d1fbe21985157b8fc2e91846a1f8d4dd92a"
   },
